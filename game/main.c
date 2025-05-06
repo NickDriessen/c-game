@@ -109,3 +109,24 @@ Gamestate* generate_dungeon(int roomcount)
     return game;
 }
 
+int main(int argv, char* argc[])
+{
+    srand(time(NULL));
+    int numrooms = 10;
+
+    if (argc >= 2)
+    {
+        numrooms = atoi(argc[1]);
+        if (numrooms < 2 || numrooms > MAX_ROOMS)
+        {
+            printf("Room ammount need to be between 2 and %d\n", MAX_ROOMS);    
+            return 1;
+        }
+    }
+
+    Gamestate* game = generate_dungeon(numrooms);
+    printf("amount of rooms = %d", numrooms);
+    printf("Starting room = %d", game->Player->currentRoom->id);
+
+    return 0;
+}

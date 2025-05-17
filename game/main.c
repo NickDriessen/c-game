@@ -34,6 +34,8 @@ typedef struct Room
         Monster* monster;
         Item* item;
     };
+
+    struct Room* next;
 }Room;
 
 typedef struct Player
@@ -68,6 +70,9 @@ int main(int argv, char* argc[])
     Gamestate* game = generate_dungeon(numrooms);
     printf("amount of rooms = %d", numrooms);
     printf("Starting room = %d", game->Player->currentRoom->id);
+
+    //free_dungeon(dungeon_head);
+    //free_player(player);
 
     return 0;
 }
@@ -277,21 +282,45 @@ void fight(Player* player, Monster* monster)
 
     while (player->HP > 0 && monster->HP > 0)
     {
-        monster->HP -= player->PP;
-        if (monster->HP > 0)
+        int round = rand() %17;
+        printf("Attack order = ");
+
+        for(int i = 4; i >= 0; i--)
         {
-            player->HP -= monster->PP;
+            int bit = (round >> i) & 1;
+            printf("%d", bit);
+
+            if(bit == 0)
+            {
+                player->HP -= monster->PP;
+                if (player->HP < 0)
+                    player->HP = 0;
+
+                printf("The monster attacks!\n You take %d demage, remaining hp = %d\n", monster->PP, player->HP);
+            }
+            else
+            {
+                monster->HP -= player->PP;
+                if (monster->HP < 0)
+                    monster->HP = 0;
+                
+                printf("You attack the monster!\n It takes %d damage! monster hp = %d\n", player->PP, monster->HP);
+            }
+
+            if(player->HP == 0 || monster->HP == 0)
+                break;
         }
-        printf("speler HP: %d, Monster HP: %d", player->HP, monster->HP);
+
+        printf("\n");
     }
 
     if (player->HP <= 0)
     {
-        printf("You lost the combat.\n");
-    } 
+        printf("You where defeated by the monster.\n");
+    }
     else
     {
-        printf("you defeated the monster!");
+        printf("The monster is defeated!\n");
     }
 }
 
@@ -343,5 +372,50 @@ void gameplay(Gamestate* game)
     if(game->Player->HP <= 0)
     {
         printf("You died.\n");
+    }
+}
+
+
+//freeing memory
+void free_monster(Monster* m)
+{
+    if(m != NULL)
+    {
+        free(m);
+    }
+}
+
+void free_items(Item* i)
+{
+    if (i != NULL)
+    {
+        free(i);
+    }
+}
+
+void free_dungeon(Room* head)
+{
+    Room* current = head;
+    while(current != NULL)
+    {
+        free_monster(current->monster);
+        free_items(current->item);
+
+        if(current->connections != NULL)
+        {
+            free(current->connections);
+        }
+
+        Room* temp = current;
+        current = current->next;
+        free(temp);
+    }
+}
+
+void free_player(Player* p)
+{
+    if(p != NULL)
+    {
+        free(p);
     }
 }

@@ -1,56 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include "dungeon.h"
 
-
-#define MAX_ROOMS 100
-
-typedef enum { EMPTY, MONSTER, LOOT, CHEST }Roomtype;
-typedef enum { GOBLIN, SKELETON }Monstertype;
-typedef enum { POWERUP, HEALTH }Itemtype;
-
-
-typedef struct Monster
-{
-    Monstertype type;
-    int HP;
-    int PP;
-}Monster;
-
-typedef struct Item
-{
-    Itemtype type;
-    int value;
-}Item;
-
-typedef struct Room
-{
-    int id;
-    Roomtype type;
-    struct Room* connections[4];
-    int visited;
-    union 
-    {
-        Monster* monster;
-        Item* item;
-    };
-
-    struct Room* next;
-}Room;
-
-typedef struct Player
-{
-    int HP;
-    int PP;
-    Room* currentRoom;
-}Player;
-
-typedef struct Gamestate
-{
-    Player* Player;
-    Room** rooms;
-    int roomcount;
-}Gamestate;
 
 int main(int argv, char* argc[])
 {

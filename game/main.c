@@ -447,3 +447,67 @@ void save_game(Gamestate* game, const char* filename)
     free(json_data);
     cJSON_Delete(root);
 }
+
+Gamestate* load_game(const char* filename)
+{
+    FILE* file = fopen(filename, "r");
+    if (!file)
+    {
+        printf("Kon %s niet openen.\n", filename);
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long length = ftell(file);
+    rewind(file);
+
+    char* data = malloc(length + 1);
+    fread(data, 1, length, file);
+    data[length] = '\0';
+    fclose(file);
+
+    cJSON* root = cJSON_Parse(data);
+    free(data);
+    if (!root)
+    {
+        printf("JSON parse error.\n");
+        return NULL;
+    }
+
+    Gamestate* game = calloc(1, sizeof(Gamestate));
+
+    cJSON* rooms_json = cJSON_GetObjectItem(root, "rooms");
+    int roomcount = cJSON_GetArraySize(rooms_json);
+    game->roomcount = roomcount;
+    game->rooms = calloc(roomcount, sizeof(Room*));
+
+    for(int i = 0; i < roomcount; i++)
+    {
+        cJSON* r = cJSON_GetArrayItem(rooms_json, i);
+        Room* room = calloc(1, sizeof(room));
+        room->id = cJSON_GetArrayItem(r, "id")->valueint;
+        room->visited = cJSON_GetObjectItem(r, "visited")->valueint;
+
+        const char* type_str = cJSON_GetObjectItem(r, "type")->valuestring;
+        if(strcmp(type_str, "MONSTER")==0)
+        {
+            room->type = MONSTER;
+            cJSON* m = cJSON_GetObjectItem(r, "monster");
+            if(m)
+            {
+                Monster* mon = calloc(1, sizeof(Monster));
+                const char* mtype = cJSON_GetObjectItem(m, "type")->valuestring;
+                mon->type = strcmp(mtype, "GOBLIN") == 0 ? GOBLIN : SKELETON;
+                mon->HP = cJSON_GetObjectItem(m, "HP")->valueint;
+                mon->PP = cJSON_GetObjectItem(m, "PP")->valueint;
+                room->monster = mon;
+            }
+        }
+        else if (strcmp(type_str, "LOOT")==0)
+        {
+            room->type = LOOT;
+            cJSON* i = cJSON_GetObjectItem(r, "item");
+        }
+    }
+
+}

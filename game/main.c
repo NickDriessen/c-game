@@ -1,15 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #include "dungeon.h"
+#include "cJSON.h"
 
 
 int main(int argv, char* argc[])
 {
     srand(time(NULL));
-    int numrooms = 10;
+    //int numrooms = 10;
 
-    if (argc >= 2)
+    /*if (argc >= 2)
     {
         numrooms = atoi(argc[1]);
         if (numrooms < 2 || numrooms > MAX_ROOMS)
@@ -17,14 +19,16 @@ int main(int argv, char* argc[])
             printf("Room ammount need to be between 2 and %d\n", MAX_ROOMS);    
             return 1;
         }
-    }
+    *///}
 
-    Gamestate* game = generate_dungeon(numrooms);
-    printf("amount of rooms = %d", numrooms);
-    printf("Starting room = %d", game->Player->currentRoom->id);
+    //Gamestate* game = generate_dungeon(numrooms);
+    //printf("amount of rooms = %d", numrooms);
+    //printf("Starting room = %d", game->Player->currentRoom->id);
 
-    //free_dungeon(dungeon_head);
-    //free_player(player);
+
+
+    //free_dungeon(Dungeon_head);
+    //free_player(Player);
 
     return 0;
 }
@@ -138,12 +142,12 @@ void assign_content_to_rooms(Gamestate* game)
         if(random < 30)
         {
             game->rooms[i]->type = MONSTER;
-            game->rooms[i]->monster = create_monster;
+            game->rooms[i]->monster = create_monster();
         }
         else if (random < 60)
         {
             game->rooms[i]->type = LOOT;
-            game->rooms[i]->item = create_item;
+            game->rooms[i]->item = create_item();
         }
         else
         {
@@ -370,4 +374,76 @@ void free_player(Player* p)
     {
         free(p);
     }
+}
+
+void save_game(Gamestate* game, const char* filename)
+{
+    cJSON* root = cJSON_CreateObject();
+    cJSON* rooms = cJSON_CreateArray();
+
+    for (int i = 0; i < game->roomcount; i++)
+    {
+        Room* r = game->rooms[i];
+        cJSON* room = cJSON_CreateObject();
+        cJSON_AddNumberToObject(room, "id", r->id);
+        cJSON_AddNumberToObject(room, "type", r->type);
+        cJSON_AddNumberToObject(room, "visited", r->visited);
+
+        cJSON* connections = cJSON_CreateArray();
+        for (int j = 0; j < 4; j++)
+        {
+            if (r->connections[j])
+            {
+                cJSON_AddItemToArray(connections, cJSON_CreateNumber(r->connections[j]->id));
+            }
+            else
+            {
+                cJSON_AddItemToArray(connections, cJSON_CreateNull());
+            }
+        }
+        cJSON_AddItemToObject(room, "connections", connections);
+
+        if(r->type == MONSTER && r->monster != NULL)
+        {
+            cJSON* mon = cJSON_CreateObject();
+            cJSON_AddNumberToObject(mon, "type", r->monster->type);
+            cJSON_AddNumberToObject(mon,"HP", r->monster->HP);
+            cJSON_AddNumberToObject(mon,"PP", r->monster->PP);
+            cJSON_AddItemToObject(room, "monster", mon);
+        }
+        else if(r->type == LOOT && r->item != NULL)
+        {
+            cJSON* it = cJSON_CreateObject();
+            cJSON_AddNumberToObject(it, "type", r->item->type);
+            cJSON_AddNumberToObject(it, "value", r->item->value);
+            cJSON_AddItemToObject(room, "item", it);
+        }
+
+        cJSON_AddItemToArray(rooms, room);
+    }
+
+    cJSON* player = cJSON_CreateObject();
+    cJSON_AddNumberToObject(player, "HP", game->Player->HP);
+    cJSON_AddNumberToObject(player, "PP", game->Player->PP);
+    cJSON_AddNumberToObject(player, "currentRoom", game->Player->currentRoom->id);
+
+    cJSON_AddItemToObject(root, "rooms", rooms);
+    cJSON_AddItemToObject(root, "player", player);
+    cJSON_AddNumberToObject(root, "roomcount", game->roomcount);
+
+    char* json_data = cJSON_Print(root);
+    FILE* file = fopen(filename, "w");
+    if(file)
+    {
+        fputs(json_data, file);
+        fclose(file);
+        printf("Game saved to %s\n", filename);
+    }
+    else
+    {
+        printf("failed to open te save file.\n");
+    }
+
+    free(json_data);
+    cJSON_Delete(root);
 }

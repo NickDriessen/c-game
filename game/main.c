@@ -507,7 +507,45 @@ Gamestate* load_game(const char* filename)
         {
             room->type = LOOT;
             cJSON* i = cJSON_GetObjectItem(r, "item");
+            if (i)
+            {
+                Item* item = calloc(1,sizeof(Item));
+                const char* itype = cJSON_GetObjectItem(i, "type")->valuestring;
+                item->type = strcmp(itype, "HEALTH")==0 ? HEALTH : POWERUP;
+                item->value = cJSON_GetObjectItem(i, "value")->valueint;
+                room->item = item;
+            }
+        }
+        else if(strcmp(type_str, "CHEST")==0)
+        {
+            room->type = CHEST;
+        }
+        else
+        {
+            room->type = EMPTY;
+        }
+
+        game->rooms[room->id] = room;
+    }
+
+
+    for(int i = 0; i < roomcount; i++)
+    {
+        cJSON* r = cJSON_GetArrayItem(rooms_json, i);
+        cJSON* conns = cJSON_GetObjectItem(r, "connections");
+        for (int j = 0; j < 4; j++)
+        {
+            cJSON* conn = cJSON_GetArrayItem(conns, j);
+            if (conn && !cJSON_IsNull(conn))
+            {
+                int other_id = conn->valueint;
+                game->rooms[i]->connections[j] = game->rooms[other_id];
+            }
         }
     }
+
+
+    cJSON* player_json = cJSON_GetObjectItem(root, "player");
+    
 
 }

@@ -16,7 +16,7 @@ int main()
     Gamestate* game = NULL;
     char choice[10];
 
-    printf("Welkom to the game!\n");
+    printf("-----------Welkom to the game!-----------\n");
     printf("Do you want to load game or start a new save?(Load/New)\ninput: ");
     scanf("%9s", choice);
 
@@ -36,30 +36,31 @@ int main()
         game = load_game(fileName);
         if(!game)
         {
-            printf("File \"%s\" not found and/or loading faild.\n", fileName);
-            return 1;
+            printf("File \"%s\" not found and/or loading failed.\n", fileName);
+            main();
         }
 
     }
     else if(strcmp(choice, "new")==0)
     {
-        int roomAmmount;
+        int roomAmmount = 0;
         printf("How manny room do you want to explore (between 2 and 100)?\ninput: ");
         scanf("%d", &roomAmmount);
-        if (roomAmmount < 2 || roomAmmount > 100)
+        if (roomAmmount > 2 || roomAmmount <= 100)
         {
-            printf("invaled room amount try again.\n");
-            return 1;
+            game = generate_dungeon(roomAmmount);
+
         }
         else
         {
-            game = generate_dungeon(roomAmmount);
+            printf("invaled room amount try again.\n");
+            main();
         }
     }
     else
     {
         printf("\"%s\" is not a valed choise", choice);
-        return 1;
+        main();
     }
 
     gameplay(game);

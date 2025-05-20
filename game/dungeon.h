@@ -63,6 +63,7 @@ void use_item(Player* player, Item* item);
 void fight(Player* player, Monster* monster);
 int enter_room(Player* player);
 void gameplay(Gamestate* game);
+void ask_save(Gamestate* game);
 
 
 void free_monster(Monster* m);
@@ -70,5 +71,8 @@ void free_items(Item* i);
 void free_dungeon(Room* head);
 void free_player(Player* p);
 
+
+void save_game(Gamestate* game, const char* filename);
+Gamestate* load_game(const char* filename);
 
 #endif

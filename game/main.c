@@ -2,51 +2,111 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 #include "dungeon.h"
 #include "cJSON.h"
 
-#define SAVEFILE "savegame.json"
+#define MAX_FILE_NAME_SIZE 100
 
 int main()
 {
+
+    srand(time(NULL));
+
     Gamestate* game = NULL;
     char choice[10];
 
-    printf("Do you want to load game or start a new save?(load/save)\ninput: ");
+    printf("Welkom to the game!\n");
+    printf("Do you want to load game or start a new save?(Load/New)\ninput: ");
     scanf("%9s", choice);
 
+    for (int i = 0; i < strlen(choice); i++)
+    {
+        choice[i] = tolower(choice[i]);
+    }
+    
     if(strcmp(choice, "load")==0)
     {
-        game = load_game(SAVEFILE);
-        if(game == NULL)
+        char fileName[MAX_FILE_NAME_SIZE];
+        printf("give the name of your save file (max 100 char and no .json).\n input: ");
+        scanf("%100s", fileName);
+
+        strcat(fileName, ".json");
+
+        game = load_game(fileName);
+        if(!game)
         {
-            printf("No save file found new game created.\n");
-            game = generate_dungeon(10);
+            printf("File \"%s\" not found and/or loading faild.\n", fileName);
+            return 1;
+        }
+
+    }
+    else if(strcmp(choice, "new")==0)
+    {
+        int roomAmmount;
+        printf("How manny room do you want to explore (between 2 and 100)?\n input: ");
+        scanf("%d", &roomAmmount);
+        if (roomAmmount < 2 || roomAmmount > 100)
+        {
+            printf("invaled room amount try again.\n");
+            return 1;
         }
         else
         {
-            printf("save loaded!\n");
+            game = generate_dungeon(roomAmmount);
         }
+        
     }
     else
     {
-        printf("creating dungeon");
-        game = generate_dungeon(10);
+        printf("\"%s\" is not a valed choise", choice);
+        return 1;
     }
 
     gameplay(game);
 
-
-    printf("Do you want to save progress?(yes/no)\ninput: ");
-    scanf("%9s", choice);
-    if(strcmp(choice, "yes"))
-    {
-        save_game(game, SAVEFILE);
-        printf("Game saved in %s!", SAVEFILE);
-    }
+    ask_save(game);
 
     free_gamestate(game);
     return 0;
+}
+
+
+void ask_save(Gamestate* game)
+{
+    char choice[10];
+
+    printf("Do you want to save progress?(yes/no)\ninput: ");
+    scanf("%9s", choice);
+
+    for (int i = 0; i < strlen(choice); i++)
+    {
+        choice[i] = tolower(choice[i]);
+    }
+
+    if(strcmp(choice, "yes")==0)
+    {
+        char savefile[MAX_FILE_NAME_SIZE];
+
+        printf("Give the name of a savefile");
+        scanf("%s", savefile);
+
+        strcat(savefile, ".json");
+
+        save_game(game, savefile);
+
+        printf("game saved on: %s", savefile);
+    }
+    else if (strcmp(choice, "no")==0)
+    {
+        printf("Game not saved.");
+    }
+    else
+    {
+        printf("wrong input try again.");
+        ask_save(game);
+    }
+    
 }
 
 Room* create_room(int id)
@@ -390,6 +450,14 @@ void free_player(Player* p)
     {
         free(p);
     }
+}
+
+void free_gamestate(Gamestate* game)
+{
+    free_monster(p);
+    free_dungeon();
+    free_items();
+    free_player();
 }
 
 void save_game(Gamestate* game, const char* filename)

@@ -44,7 +44,7 @@ int main()
     else if(strcmp(choice, "new")==0)
     {
         int roomAmmount;
-        printf("How manny room do you want to explore (between 2 and 100)?\n input: ");
+        printf("How manny room do you want to explore (between 2 and 100)?\ninput: ");
         scanf("%d", &roomAmmount);
         if (roomAmmount < 2 || roomAmmount > 100)
         {
@@ -55,7 +55,6 @@ int main()
         {
             game = generate_dungeon(roomAmmount);
         }
-        
     }
     else
     {
@@ -74,7 +73,7 @@ int main()
 
 void ask_save(Gamestate* game)
 {
-    char choice[10];
+    char choice[10];    
 
     printf("Do you want to save progress?(yes/no)\ninput: ");
     scanf("%9s", choice);
@@ -454,10 +453,38 @@ void free_player(Player* p)
 
 void free_gamestate(Gamestate* game)
 {
-    free_monster(p);
-    free_dungeon();
-    free_items();
-    free_player();
+    if (!game)
+        return;
+    
+    for(int i = 0; i < game->roomcount; i++)
+    {
+        Room* room = game->rooms[i];
+        if (!room)
+            continue;
+
+        if(room->type == MONSTER && room->monster)
+        {
+            free(room->monster);
+            room->monster = NULL;
+        }
+
+        if(room->type == LOOT && room->item)
+        {
+            free(room->item);
+            room->item = NULL;
+        }
+
+        free(room);
+    }
+
+    free(game->rooms);
+
+    if (game->Player)
+    {
+        free(game->Player);
+    }
+
+    free(game);
 }
 
 void save_game(Gamestate* game, const char* filename)
@@ -569,7 +596,7 @@ Gamestate* load_game(const char* filename)
     {
         cJSON* r = cJSON_GetArrayItem(rooms_json, i);
         Room* room = calloc(1, sizeof(room));
-        room->id = cJSON_GetArrayItem(r, "id")->valueint;
+        room->id = cJSON_GetObjectItem(r, "id")->valueint;
         room->visited = cJSON_GetObjectItem(r, "visited")->valueint;
 
         const char* type_str = cJSON_GetObjectItem(r, "type")->valuestring;

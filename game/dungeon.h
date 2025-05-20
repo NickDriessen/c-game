@@ -70,6 +70,7 @@ void free_monster(Monster* m);
 void free_items(Item* i);
 void free_dungeon(Room* head);
 void free_player(Player* p);
+void free_gamestate(Gamestate* game);
 
 
 void save_game(Gamestate* game, const char* filename);

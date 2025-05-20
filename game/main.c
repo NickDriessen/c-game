@@ -5,31 +5,47 @@
 #include "dungeon.h"
 #include "cJSON.h"
 
+#define SAVEFILE "savegame.json"
 
-int main(int argv, char* argc[])
+int main()
 {
-    srand(time(NULL));
-    //int numrooms = 10;
+    Gamestate* game = NULL;
+    char choice[10];
 
-    /*if (argc >= 2)
+    printf("Do you want to load game or start a new save?(load/save)\ninput: ");
+    scanf("%9s", choice);
+
+    if(strcmp(choice, "load")==0)
     {
-        numrooms = atoi(argc[1]);
-        if (numrooms < 2 || numrooms > MAX_ROOMS)
+        game = load_game(SAVEFILE);
+        if(game == NULL)
         {
-            printf("Room ammount need to be between 2 and %d\n", MAX_ROOMS);    
-            return 1;
+            printf("No save file found new game created.\n");
+            game = generate_dungeon(10);
         }
-    *///}
+        else
+        {
+            printf("save loaded!\n");
+        }
+    }
+    else
+    {
+        printf("creating dungeon");
+        game = generate_dungeon(10);
+    }
 
-    //Gamestate* game = generate_dungeon(numrooms);
-    //printf("amount of rooms = %d", numrooms);
-    //printf("Starting room = %d", game->Player->currentRoom->id);
+    gameplay(game);
 
 
+    printf("Do you want to save progress?(yes/no)\ninput: ");
+    scanf("%9s", choice);
+    if(strcmp(choice, "yes"))
+    {
+        save_game(game, SAVEFILE);
+        printf("Game saved in %s!", SAVEFILE);
+    }
 
-    //free_dungeon(Dungeon_head);
-    //free_player(Player);
-
+    free_gamestate(game);
     return 0;
 }
 
@@ -546,6 +562,13 @@ Gamestate* load_game(const char* filename)
 
 
     cJSON* player_json = cJSON_GetObjectItem(root, "player");
-    
+    Player* p = calloc(1, sizeof(Player));
+    p->HP = cJSON_GetObjectItem(player_json, "HP")->valueint;
+    p->PP = cJSON_GetObjectItem(player_json, "PP")->valueint;
+    int currentRoomId = cJSON_GetObjectItem(player_json, "currentRoomId")->valueint;
+    p->currentRoom = game->rooms[currentRoomId];
+    game->Player = p;
 
+    cJSON_Delete(root);
+    return game;
 }

@@ -28,7 +28,7 @@ int main()
     if(strcmp(choice, "load")==0)
     {
         char fileName[MAX_FILE_NAME_SIZE];
-        printf("give the name of your save file (max 100 char and no .json).\n input: ");
+        printf("give the name of your save file (max 100 char and dont add .json).\n input: ");
         scanf("%100s", fileName);
 
         strcat(fileName, ".json");
@@ -46,10 +46,9 @@ int main()
         int roomAmmount = 0;
         printf("How manny room do you want to explore (between 2 and 100)?\ninput: ");
         scanf("%d", &roomAmmount);
-        if (roomAmmount > 2 || roomAmmount <= 100)
+        if (roomAmmount > 2 && roomAmmount < 100)
         {
             game = generate_dungeon(roomAmmount);
-
         }
         else
         {
@@ -88,8 +87,8 @@ void ask_save(Gamestate* game)
     {
         char savefile[MAX_FILE_NAME_SIZE];
 
-        printf("Give the name of a savefile");
-        scanf("%s", savefile);
+        printf("Give the name of a savefile (max 100 char and dont add .json)");
+        scanf("%100s", savefile);
 
         strcat(savefile, ".json");
 
@@ -118,7 +117,6 @@ Room* create_room(int id)
     return room;
 }
 
-
 void connect_rooms(Room* a, Room* b)
 {
     for (int i = 0; i < 4; i++)
@@ -146,13 +144,17 @@ Gamestate* generate_dungeon(int roomcount)
     for (int i = 0; i < roomcount; i++)
         game->rooms[i] = create_room(i);
 
-    for (int i = 0; i < roomcount; i++)
+
+    int other = 0;
+    for (int i = 1; i < roomcount+1; i++)
     {
-        int other = rand()% i;
-        connect_bidirectional(game->rooms[i], game->rooms[other]);
+        other = rand() % i;
+        connect_bidirectional(game->rooms[i-1], game->rooms[other]);
     }
 
+
     game->Player = calloc(1, sizeof(Player));
+
     game->Player->HP = 20;
     game->Player->PP = 5;
     game->Player->currentRoom = game->rooms[0];

@@ -64,7 +64,9 @@ int main()
 
     gameplay(game);
 
-    ask_save(game);
+    Player* player;    
+    if (player->HP <= 0 || game->Player->currentRoom->type != CHEST)
+        ask_save(game);
 
     free_gamestate(game);
     return 0;
@@ -154,7 +156,6 @@ Gamestate* generate_dungeon(int roomcount)
 
 
     game->Player = calloc(1, sizeof(Player));
-
     game->Player->HP = 20;
     game->Player->PP = 5;
     game->Player->currentRoom = game->rooms[0];

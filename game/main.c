@@ -6,7 +6,7 @@
 #include "dungeon.h"
 #include "cJSON.h"
 
-#define MAX_FILE_NAME_SIZE 100
+#define MAX_FILE_NAME_SIZE 106
 
 int main()
 {
@@ -15,58 +15,61 @@ int main()
 
     Gamestate* game = NULL;
     char choice[10];
-
-    printf("-----------Welkom to the game!-----------\n");
-    printf("Do you want to load game or start a new save?(Load/New)\ninput: ");
-    scanf("%9s", choice);
-
-    for (int i = 0; i < strlen(choice); i++)
+    int validChoice = 0;
+    while (!validChoice) 
     {
-        choice[i] = tolower(choice[i]);
-    }
-    
-    if(strcmp(choice, "load")==0)
-    {
-        char fileName[MAX_FILE_NAME_SIZE];
-        printf("give the name of your save file (max 100 char and dont add .json).\n input: ");
-        scanf("%100s", fileName);
+        printf("-----------Welkom to the game!-----------\n");
+        printf("Do you want to load game or start a new save?(Load/New)\ninput: ");
+        scanf("%9s", choice);
 
-        strcat(fileName, ".json");
-
-        game = load_game(fileName);
-        if(!game)
+        for (int i = 0; i < strlen(choice); i++)
         {
-            printf("File \"%s\" not found and/or loading failed.\n", fileName);
-            main();
+            choice[i] = tolower(choice[i]);
         }
 
-    }
-    else if(strcmp(choice, "new")==0)
-    {
-        int roomAmmount = 0;
-        printf("How manny room do you want to explore (between 2 and 100)?\ninput: ");
-        scanf("%d", &roomAmmount);
-        if (roomAmmount > 2 && roomAmmount < 100)
+        if(strcmp(choice, "load")==0)
         {
-            game = generate_dungeon(roomAmmount);
+            char fileName[MAX_FILE_NAME_SIZE];
+            printf("give the name of your save file (max 100 char and dont add .json).\n input: ");
+            scanf("%100s", fileName);
+
+            strcat(fileName, ".json");
+
+            game = load_game(fileName);
+            if (game) 
+                validChoice = 1;
+            else
+            {
+                printf("File \"%s\" not found and/or loading failed.\n", fileName);
+            }
+
+        }
+        else if(strcmp(choice, "new")==0)
+        {
+            int roomAmmount = 0;
+            printf("How manny room do you want to explore (between 2 and 100)?\ninput: ");
+            scanf("%d", &roomAmmount);
+            if (roomAmmount >= 2 && roomAmmount <= 100)
+            {
+                game = generate_dungeon(roomAmmount);
+            }
+            if (game) validChoice = 1;
+            else
+            {
+                printf("invaled room amount try again.\n");
+            }
         }
         else
         {
-            printf("invaled room amount try again.\n");
-            main();
+            printf("\"%s\" is not a valed choise try again.\n", choice);
         }
     }
-    else
-    {
-        printf("\"%s\" is not a valed choise", choice);
-        main();
-    }
-
+    
     gameplay(game);
 
-    Player* player;    
-    if (player->HP <= 0 || game->Player->currentRoom->type != CHEST)
+    if (game->Player->HP > 0 || game->Player->currentRoom->type != CHEST)
         ask_save(game);
+
 
     free_gamestate(game);
     return 0;
@@ -107,7 +110,6 @@ void ask_save(Gamestate* game)
         printf("wrong input try again.");
         ask_save(game);
     }
-    
 }
 
 Room* create_room(int id)
@@ -123,7 +125,7 @@ void connect_rooms(Room* a, Room* b)
 {
     for (int i = 0; i < 4; i++)
     {
-        if (a->connections[i] == NULL)
+        if (a->connections[i] == 0)
         {
             a->connections[i] = b;
             break;
@@ -146,14 +148,11 @@ Gamestate* generate_dungeon(int roomcount)
     for (int i = 0; i < roomcount; i++)
         game->rooms[i] = create_room(i);
 
-
-    int other = 0;
-    for (int i = 1; i < roomcount+1; i++)
+    for (int i = 1; i < roomcount; i++)
     {
-        other = rand() % i;
-        connect_bidirectional(game->rooms[i-1], game->rooms[other]);
+        int other = rand() % i;
+        connect_bidirectional(game->rooms[i], game->rooms[other]);
     }
-
 
     game->Player = calloc(1, sizeof(Player));
     game->Player->HP = 20;
@@ -203,7 +202,7 @@ Item* create_item()
 
 void assign_content_to_rooms(Gamestate* game)
 {
-    int treasureRoom = rand() % game->roomcount;
+    int treasureRoom = 1 + (rand() % (game->roomcount - 1));
 
     for( int i = 0; i < game->roomcount; i++)
     {
@@ -599,41 +598,39 @@ Gamestate* load_game(const char* filename)
     for(int i = 0; i < roomcount; i++)
     {
         cJSON* r = cJSON_GetArrayItem(rooms_json, i);
-        Room* room = calloc(1, sizeof(room));
+        Room* room = calloc(1, sizeof(Room));
         room->id = cJSON_GetObjectItem(r, "id")->valueint;
         room->visited = cJSON_GetObjectItem(r, "visited")->valueint;
 
-        const char* type_str = cJSON_GetObjectItem(r, "type")->valuestring;
-        if(strcmp(type_str, "MONSTER")==0)
+        int type_int = cJSON_GetObjectItem(r, "type")->valueint;
+        room->type = (Roomtype)type_int;
+
+        if(room->type == MONSTER)
         {
-            room->type = MONSTER;
             cJSON* m = cJSON_GetObjectItem(r, "monster");
             if(m)
             {
                 Monster* mon = calloc(1, sizeof(Monster));
-                const char* mtype = cJSON_GetObjectItem(m, "type")->valuestring;
-                mon->type = strcmp(mtype, "GOBLIN") == 0 ? GOBLIN : SKELETON;
+                int mtype = cJSON_GetObjectItem(m, "type")->valueint;
+                mon->type = (Monstertype)mtype;
                 mon->HP = cJSON_GetObjectItem(m, "HP")->valueint;
                 mon->PP = cJSON_GetObjectItem(m, "PP")->valueint;
                 room->monster = mon;
             }
+            else
+                room->monster = NULL;
         }
-        else if (strcmp(type_str, "LOOT")==0)
+        else if (room->type == LOOT)
         {
-            room->type = LOOT;
             cJSON* i = cJSON_GetObjectItem(r, "item");
             if (i)
             {
                 Item* item = calloc(1,sizeof(Item));
-                const char* itype = cJSON_GetObjectItem(i, "type")->valuestring;
-                item->type = strcmp(itype, "HEALTH")==0 ? HEALTH : POWERUP;
+                int itype = cJSON_GetObjectItem(i, "type")->valueint;
+                item->type = (Itemtype)itype;
                 item->value = cJSON_GetObjectItem(i, "value")->valueint;
                 room->item = item;
             }
-        }
-        else if(strcmp(type_str, "CHEST")==0)
-        {
-            room->type = CHEST;
         }
         else
         {
@@ -647,8 +644,9 @@ Gamestate* load_game(const char* filename)
     for(int i = 0; i < roomcount; i++)
     {
         cJSON* r = cJSON_GetArrayItem(rooms_json, i);
+        Room* current_room_obj = game->rooms[cJSON_GetObjectItem(r, "id")->valueint];
         cJSON* conns = cJSON_GetObjectItem(r, "connections");
-        for (int j = 0; j < 4; j++)
+        for (int j = 0; j < cJSON_GetArraySize(conns); j++)
         {
             cJSON* conn = cJSON_GetArrayItem(conns, j);
             if (conn && !cJSON_IsNull(conn))
@@ -664,7 +662,8 @@ Gamestate* load_game(const char* filename)
     Player* p = calloc(1, sizeof(Player));
     p->HP = cJSON_GetObjectItem(player_json, "HP")->valueint;
     p->PP = cJSON_GetObjectItem(player_json, "PP")->valueint;
-    int currentRoomId = cJSON_GetObjectItem(player_json, "currentRoomId")->valueint;
+
+    int currentRoomId = cJSON_GetObjectItem(player_json, "currentRoom")->valueint;
     p->currentRoom = game->rooms[currentRoomId];
     game->Player = p;
 

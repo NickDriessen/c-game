@@ -6,20 +6,19 @@
 #include "dungeon.h"
 #include "cJSON.h"
 
-#define MAX_FILE_NAME_SIZE 106
 
 int main(int argc, char *argv[])
 {
 
-    srand(time(NULL));
+    srand(time(NULL)); //makes random numbers passable
 
-    Gamestate* game = NULL;
+    Gamestate* game = NULL; //starts the gamestate ar NULL (no game jet)
 
-    int load = 0;
+    int load = 0; //chechs if you user chose to load a file ar start a now game
 
-    for (int i = 0; i < strlen(argv[1]); i++)
+    for (int i = 0; i < strlen(argv[1]); i++) 
     {
-        if (argv[1][i] == '.')
+        if (argv[1][i] == '.')      //checks if there is a . in the sting for .json
         {
             load = 1;
             char fileName[MAX_FILE_NAME_SIZE];
@@ -29,10 +28,10 @@ int main(int argc, char *argv[])
         }
     }
 
-    if(!load && argv[1][1] <= '9' && argv[1][1] >= '1')
+    if(!load && argv[1][1] <= '9' && argv[1][1] >= '1') // checks if the first letter in the string is between a 1 and a 9 and if the game is not loaded 
     {
         int roomAmmount;
-        sscanf(argv[1], "%d", &roomAmmount);
+        sscanf(argv[1], "%d", &roomAmmount); // makes the string a int so it can be used
         if (roomAmmount >= 2 && roomAmmount <= 100)
         {
             game = generate_dungeon(roomAmmount);
@@ -43,62 +42,27 @@ int main(int argc, char *argv[])
     }
 
 
-    gameplay(game);
+    gameplay(game); //the gameplay
 
-    if (game->Player->currentRoom->type != CHEST && game->Player->HP > 0)
+    if (game->Player->currentRoom->type != CHEST && game->Player->HP > 0) //checks if the playes is dead or if the player won the game
         ask_save(game);
 
 
-    free_gamestate(game);
-    return 0;
+    free_gamestate(game); //frees the alocated memory
+    return 0; //exit the game
 }
 
-void ask_save(Gamestate* game)
-{
-    char choice[10];    
-
-    printf("Do you want to save progress?(yes/no)\ninput: ");
-    scanf("%9s", choice);
-
-    for (int i = 0; i < strlen(choice); i++)
-    {
-        choice[i] = tolower(choice[i]);
-    }
-
-    if(strcmp(choice, "yes")==0)
-    {
-        char savefile[MAX_FILE_NAME_SIZE];
-
-        printf("Give the name of a savefile (max 100 char and dont add .json)");
-        scanf("%100s", savefile);
-
-        strcat(savefile, ".json");
-
-        save_game(game, savefile);
-
-        printf("game saved on: %s", savefile);
-    }
-    else if (strcmp(choice, "no")==0)
-    {
-        printf("Game not saved.");
-    }
-    else
-    {
-        printf("wrong input try again.");
-        ask_save(game);
-    }
-}
-
+// dungeon generation
 Room* create_room(int id)
 {
-    Room* room = calloc(1, sizeof(Room));
-    room->id = id;
-    room->type = EMPTY;
+    Room* room = calloc(1, sizeof(Room)); //alocates the memory and sets it to 0
+    room->id = id; // gives the room its room id
+    room->type = EMPTY; // sets the room type to EMPTY
 
     return room;
 }
 
-void connect_rooms(Room* a, Room* b)
+void connect_rooms(Room* a, Room* b) //makes it so the rooms are connected
 {
     for (int i = 0; i < 4; i++)
     {
@@ -110,51 +74,51 @@ void connect_rooms(Room* a, Room* b)
     }
 }
 
-void connect_bidirectional(Room* a, Room* b)
+void connect_bidirectional(Room* a, Room* b) //makes it so the room are connected from both sides
 {
     connect_rooms(a, b);
     connect_rooms(b, a);
 }
 
-Gamestate* generate_dungeon(int roomcount)
+Gamestate* generate_dungeon(int roomcount) //the fungeon generation
 {
-    Gamestate* game = calloc(1, sizeof(Gamestate));
-    game->rooms = calloc(1, sizeof(Room*) * roomcount);
+    Gamestate* game = calloc(1, sizeof(Gamestate)); // alocates the memory for Gamestate ans sets it to 0
+    game->rooms = calloc(1, sizeof(Room*) * roomcount); // allocates the memory for the selected amount of rooms and sets it to 0
     game->roomcount = roomcount;
 
-    for (int i = 0; i < roomcount; i++)
+    for (int i = 0; i < roomcount; i++) //creates the specified room amount
         game->rooms[i] = create_room(i);
 
-    for (int i = 1; i < roomcount; i++)
+    for (int i = 1; i < roomcount; i++) //connects random rooms
     {
         int other = rand() % i;
         connect_bidirectional(game->rooms[i], game->rooms[other]);
     }
-
+    //creates the player
     game->Player = calloc(1, sizeof(Player));
     game->Player->HP = 20;
     game->Player->PP = 5;
     game->Player->currentRoom = game->rooms[0];
 
-    assign_content_to_rooms(game);
+    assign_content_to_rooms(game); //sets the conten to the room (monster, loot, chest)
 
     return game;
 }
 
 Monster* create_monster()
 {
-    Monster* m = calloc(1, sizeof(Monster));
-    m->type = rand() % 2;
+    Monster* m = calloc(1, sizeof(Monster)); // alocates the memory for monster and sets it to 0
+    m->type = rand() % 2; //chooses the random monster thats in the room
 
     if(m->type == GOBLIN)
     {
-        m->HP = 10;
-        m->PP = 4;
+        m->HP = 12; // health points of goblin
+        m->PP = 2; // power points of skeleton
     }
     if(m->type == SKELETON)
     {
-        m->HP = 5;
-        m->PP = 7;
+        m->HP = 6; // health points of skeleton
+        m->PP = 4; // power points of skeleton
     }
 
     return m;
@@ -162,16 +126,16 @@ Monster* create_monster()
 
 Item* create_item()
 {
-    Item* i = calloc(1, sizeof(Item));
-    i->type = rand() % 2;
+    Item* i = calloc(1, sizeof(Item)); // alocates the memory for item and sets it to 0
+    i->type = rand() % 2; //chooses the random item thats in the room
 
     if(i->type == HEALTH)
     {
-        i->value = 5;
+        i->value = 5; // gives 5 healt points
     }
     if(i->type == POWERUP)
     {
-        i->value = 2;
+        i->value = 2; // gives 2 power points
     }
 
     return i;
@@ -179,14 +143,14 @@ Item* create_item()
 
 void assign_content_to_rooms(Gamestate* game)
 {
-    int treasureRoom = 1 + (rand() % (game->roomcount - 1));
+    int treasureRoom = 1 + (rand() % (game->roomcount - 1)); //makes the number id of the treasureRoom
 
     for( int i = 0; i < game->roomcount; i++)
     {
         if(i == 0)
             continue;
 
-        else if(i == treasureRoom)
+        else if(i == treasureRoom) //places the treasureRoom
         {
             game->rooms[i]->type = CHEST;
             continue;
@@ -194,35 +158,36 @@ void assign_content_to_rooms(Gamestate* game)
 
         int random = rand() % 100;
 
-        if(random < 30)
+        if(random < 30) //places the monsterRoom
         {
             game->rooms[i]->type = MONSTER;
             game->rooms[i]->monster = create_monster();
         }
-        else if (random < 60)
+        else if (random < 70) //places the itemRoom
         {
             game->rooms[i]->type = LOOT;
             game->rooms[i]->item = create_item();
         }
-        else
+        else //places the emptyRoom
         {
             game->rooms[i]->type = EMPTY;
         }
     }
 }
 
+//the game play
 void room_discription(Player* player)
 {
-    Room* room = player->currentRoom;
-    printf("you are currently in room %d\n", room->id);
+    Room* room = player->currentRoom; //shows you the room the player is in
+    printf("you are currently in room %d\n\n", room->id); //prints out the room the player is in
 
-    if(room->visited)
+    if(room->visited) //shuld only print when the room is not visited before(does fully not work)
     {
         printf("This room has been visited before(by you).\n");
     }
     else
     {
-        switch (room->type)
+        switch (room->type) //is seposed the tell you what room your in but it doesn't
         {
         case MONSTER:
             printf("A wild Monster apeared!\n");
@@ -242,7 +207,7 @@ void room_discription(Player* player)
         }
     }
 
-    printf("This room is connected to rooms: ");
+    printf("This room is connected to rooms: "); //shows what rooms you can go to
     for(int i = 0; i < 4; i++)
         {
             if(room->connections[i] != NULL)
@@ -254,15 +219,15 @@ void room_discription(Player* player)
 Room* choose_next_room(Room* current)
 {
     int option;
-    printf("choose a door(room id) or exit (-1): ");
+    printf("choose a door(room id) or exit (-1): "); //asks what room you want to go to or exit the game (ot break the game if you type a non interger(fix hopefully later))
     scanf("%d", &option);
 
-    if (option == -1)
+    if (option == -1) //if -1 wil send you to the ask save game
     {
         return NULL;
     }
     
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < 4; i++) //cheks if chosen door is possible
     {
         if(current->connections[i] != NULL && current->connections[i]->id == option)
         {
@@ -270,21 +235,21 @@ Room* choose_next_room(Room* current)
         }
     }
 
-    printf("That is not a option, try again.\n");
+    printf("That is not a option, try again.\n"); //if not possible asks again
     return choose_next_room(current);
 }
 
 void use_item(Player* player, Item* item)
 {
-    switch (item->type)
+    switch (item->type) //gives and uses the found item
     {
     case HEALTH:
         player->HP += item->value;
-        printf("You gained %d HP! (now %d)\n", item->value, player->HP);
+        printf("\nYou found a potion and gained %d HP! (now %d)\n", item->value, player->HP);
         break;
     case POWERUP:
         player->PP += item->value;
-        printf("You used a PPUP power gets a +%d (now %d)\n", item->value, player->PP);
+        printf("\nYou found a PPup and your power gets a +%d (now %d)\n", item->value, player->PP);
         break;
     default:
         printf("No item.\n");
@@ -294,25 +259,25 @@ void use_item(Player* player, Item* item)
 
 void fight(Player* player, Monster* monster)
 {
-    printf("Combat starts!\n");
+    printf("Combat starts!\n\n"); //starts the monster fight
+    getchar();
 
-    while (player->HP > 0 && monster->HP > 0)
+    while (player->HP > 0 && monster->HP > 0) //combat with monster till one is dead
     {
-        int round = rand() %17;
-        printf("Attack order = ");
+        int round = rand() %16; //gives a random number tussen de 0 en 16
 
         for(int i = 4; i >= 0; i--)
         {
-            int bit = (round >> i) & 1;
-            printf("%d", bit);
+            int bit = (round >> i) & 1; //makes random number a bit
 
-            if(bit == 0)
+            if(bit == 0) //uses bit so the monster or the player fights
             {
                 player->HP -= monster->PP;
                 if (player->HP < 0)
                     player->HP = 0;
 
                 printf("The monster attacks!\n You take %d demage, remaining hp = %d\n", monster->PP, player->HP);
+                getchar();
             }
             else
             {
@@ -321,20 +286,21 @@ void fight(Player* player, Monster* monster)
                     monster->HP = 0;
                 
                 printf("You attack the monster!\n It takes %d damage! monster hp = %d\n", player->PP, monster->HP);
+                getchar();
             }
 
-            if(player->HP == 0 || monster->HP == 0)
+            if(player->HP == 0 || monster->HP == 0) // if one dies the fights end
                 break;
         }
 
         printf("\n");
     }
 
-    if (player->HP <= 0)
+    if (player->HP <= 0) // if the player dies
     {
         printf("You where defeated by the monster.\n");
     }
-    else
+    else // if the monster dies
     {
         printf("The monster is defeated!\n");
     }
@@ -342,23 +308,23 @@ void fight(Player* player, Monster* monster)
 
 int enter_room(Player* player)
 {
-    Room* room = player->currentRoom;
+    Room* room = player->currentRoom; //checks what room the player enterd
 
-    if(!room->visited)
+    if(!room->visited) //checks if you viseted the room before
     {
         switch (room->type)
         {
-        case MONSTER:
+        case MONSTER: //case monster the fight starts
             fight(player, room->monster);
             free(room->monster);
             room->monster = NULL;
             break;
-        case LOOT:
+        case LOOT: //case loot you get and use a item
             use_item(player, room->item);
             free(room->item);
             room->item = NULL;
             break;
-        case CHEST:
+        case CHEST: //case chest you win the game
             printf("You found the chest you win the game!\n");
             getchar();
             return 1;
@@ -366,7 +332,7 @@ int enter_room(Player* player)
         default:
             break;
         }
-        room->visited = 1;
+        room->visited = 1; //makes it so the room is visited
     }
 
     return 0;
@@ -377,12 +343,12 @@ void gameplay(Gamestate* game)
     int finished = 0;
     int player_exit = 0;
     
-    while (!finished && game->Player->HP > 0 && !player_exit)
+    while (!finished && game->Player->HP > 0 && !player_exit) //checks if the player is not dead or the chest if found or if you didn't exit the game
     {
-        room_discription(game->Player);
+        room_discription(game->Player); //describes the room
 
-        Room* next = choose_next_room(game->Player->currentRoom);
-        if (next == NULL)
+        Room* next = choose_next_room(game->Player->currentRoom); //makes it so you can shoose the next room
+        if (next == NULL) //makes it so you can exit the room
         {
             player_exit = 1;
             continue;
@@ -391,28 +357,26 @@ void gameplay(Gamestate* game)
 
         finished = enter_room(game->Player);
     }
-    if (finished)
+    if (finished) //for if you win the game
     {
-
         printf("Congratulations!\n");
     } 
-    else if (player_exit)
+    else if (player_exit) //fot if you exit the game
     {
         printf("You have chosen to exit the dungeon. Farewell, adventurer!\n");
     } 
-    else if (game->Player->HP <= 0)
+    else if (game->Player->HP <= 0) //for if you die
     {
         printf("Your journey has ended in demise.\n");
     } 
-    else
+    else //just in case should never happen
     {
         printf("The game has ended for an unknown reason.\n");
     }
 }
 
-
 //freeing memory
-void free_monster(Monster* m)
+void free_monster(Monster* m) //frees the monster memory
 {
     if(m != NULL)
     {
@@ -420,7 +384,7 @@ void free_monster(Monster* m)
     }
 }
 
-void free_items(Item* i)
+void free_items(Item* i) //frees the item memory
 {
     if (i != NULL)
     {
@@ -428,7 +392,7 @@ void free_items(Item* i)
     }
 }
 
-void free_player(Player* p)
+void free_player(Player* p) //frees the player memory
 {
     if(p != NULL)
     {
@@ -436,7 +400,7 @@ void free_player(Player* p)
     }
 }
 
-void free_gamestate(Gamestate* game)
+void free_gamestate(Gamestate* game) //makes it so the others get freed
 {
     if (!game)
         return;
@@ -472,7 +436,44 @@ void free_gamestate(Gamestate* game)
     free(game);
 }
 
-void save_game(Gamestate* game, const char* filename)
+//saving & loading the game.
+void ask_save(Gamestate* game)
+{
+    char choice[10];    
+
+    printf("Do you want to save progress?(yes/no)\ninput: "); //asks you is you want to save your game
+    scanf("%9s", choice);
+
+    for (int i = 0; i < strlen(choice); i++)
+    {
+        choice[i] = tolower(choice[i]); //makes it all lower case
+    }
+
+    if(strcmp(choice, "yes")==0) //if yes you wil start the saving game progress
+    {
+        char savefile[MAX_FILE_NAME_SIZE];
+
+        printf("Give the name of a savefile (max 100 char and dont add .json)\ninput: "); //asks for the file name
+        scanf("%100s", savefile);
+
+        strcat(savefile, ".json"); //adds the .json for you
+
+        save_game(game, savefile); //saves the game in a .json file
+
+        printf("game saved on: %s", savefile); //tells you the full file name
+    }
+    else if (strcmp(choice, "no")==0) // if no the game wil just close
+    {
+        printf("Game not saved.");
+    }
+    else //for a mis type
+    {
+        printf("wrong input try again.");
+        ask_save(game);
+    }
+}
+
+void save_game(Gamestate* game, const char* filename) //the part I get the least. Made it with ai and i dont understant it one bit but i dont have time to learn it or chainge it i wil try to explaine it when asked. (but keep your hope low)
 {
     cJSON* root = cJSON_CreateObject();
     cJSON* rooms = cJSON_CreateArray();

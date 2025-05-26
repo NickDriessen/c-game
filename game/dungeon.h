@@ -1,8 +1,7 @@
 #ifndef DUNGEON_H
 #define DUNGEON_H
 
-
-#define MAX_ROOMS 100
+#define MAX_FILE_NAME_SIZE 106
 
 typedef enum { EMPTY, MONSTER, LOOT, CHEST }Roomtype;
 typedef enum { GOBLIN, SKELETON }Monstertype;

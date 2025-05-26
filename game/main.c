@@ -38,7 +38,10 @@ int main(int argc, char *argv[])
             printf("--------------Welcome to the dungeon--------------\n");
         }
         else
-            printf("ammount not right needs to be between 2 and 100");
+        {
+            printf("ammount not right needs to be between 2 and 100\n");
+            return 0;
+        }
     }
 
 
@@ -227,11 +230,11 @@ Room* choose_next_room(Room* current)
         return NULL;
     }
     
-    int i_option = atoi(option);
+    int int_option = atoi(option); //makes the string a int
 
     for(int i = 0; i < 4; i++) //cheks if chosen door is possible
     {
-        if(current->connections[i] != NULL && current->connections[i]->id == i_option)
+        if(current->connections[i] != NULL && current->connections[i]->id == int_option)
         {
             return current->connections[i];
         }

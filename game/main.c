@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if(!load && argv[1][1] <= '9' && argv[1][1] >= '1') // checks if the first letter in the string is between a 1 and a 9 and if the game is not loaded 
+    if(!load && argv[1][1] <= '9' && argv[1][1] >= '0') // checks if the first letter in the string is between a 1 and a 9 and if the game is not loaded 
     {
         int roomAmmount;
         sscanf(argv[1], "%d", &roomAmmount); // makes the string a int so it can be used

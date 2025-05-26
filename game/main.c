@@ -75,7 +75,6 @@ int main()
     return 0;
 }
 
-
 void ask_save(Gamestate* game)
 {
     char choice[10];    
@@ -277,8 +276,13 @@ void room_discription(Player* player)
 Room* choose_next_room(Room* current)
 {
     int option;
-    printf("choose a door(room id): ");
+    printf("choose a door(room id) or exit (-1): ");
     scanf("%d", &option);
+
+    if (option == -1)
+    {
+        return NULL;
+    }
     
     for(int i = 0; i < 4; i++)
     {
@@ -393,19 +397,38 @@ int enter_room(Player* player)
 void gameplay(Gamestate* game)
 {
     int finished = 0;
+    int player_exit = 0;
     
-    while (!finished && game->Player->HP > 0)
+    while (!finished && game->Player->HP > 0 && !player_exit)
     {
         room_discription(game->Player);
 
         Room* next = choose_next_room(game->Player->currentRoom);
+        if (next == NULL)
+        {
+            player_exit = 1;
+            continue;
+        }
         game->Player->currentRoom = next;
 
         finished = enter_room(game->Player);
     }
-    if(game->Player->HP <= 0)
+    if (finished)
     {
-        printf("You died.\n");
+
+        printf("Congratulations!\n");
+    } 
+    else if (player_exit)
+    {
+        printf("You have chosen to exit the dungeon. Farewell, adventurer!\n");
+    } 
+    else if (game->Player->HP <= 0)
+    {
+        printf("Your journey has ended in demise.\n");
+    } 
+    else
+    {
+        printf("The game has ended for an unknown reason.\n");
     }
 }
 
@@ -424,25 +447,6 @@ void free_items(Item* i)
     if (i != NULL)
     {
         free(i);
-    }
-}
-
-void free_dungeon(Room* head)
-{
-    Room* current = head;
-    while(current != NULL)
-    {
-        free_monster(current->monster);
-        free_items(current->item);
-
-        if(current->connections != NULL)
-        {
-            free(current->connections);
-        }
-
-        Room* temp = current;
-        current = current->next;
-        free(temp);
     }
 }
 

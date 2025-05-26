@@ -218,24 +218,26 @@ void room_discription(Player* player)
 
 Room* choose_next_room(Room* current)
 {
-    int option;
-    printf("choose a door(room id) or exit (-1): "); //asks what room you want to go to or exit the game (ot break the game if you type a non interger(fix hopefully later))
-    scanf("%d", &option);
+    char option[9];
+    printf("choose a door(room id) or type exit: "); //asks what room you want to go to or exit the game
+    scanf("%9s", &option);
 
-    if (option == -1) //if -1 wil send you to the ask save game
+    if (strcmp(option,"exit")==0) //if exit wil send you to the ask save game
     {
         return NULL;
     }
     
+    int i_option = atoi(option);
+
     for(int i = 0; i < 4; i++) //cheks if chosen door is possible
     {
-        if(current->connections[i] != NULL && current->connections[i]->id == option)
+        if(current->connections[i] != NULL && current->connections[i]->id == i_option)
         {
             return current->connections[i];
         }
     }
 
-    printf("That is not a option, try again.\n"); //if not possible asks again
+    printf("That is not a option, try again.\n"); //if not possible, asks again
     return choose_next_room(current);
 }
 

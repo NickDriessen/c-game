@@ -3,8 +3,8 @@
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
-#include "dungeon.h"
-#include "cJSON.h"
+#include "dungeon.h" //for the structs and enmus
+#include "cJSON.h" //for the save and load game
 
 
 int main(int argc, char *argv[])

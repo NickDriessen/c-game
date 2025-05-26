@@ -259,6 +259,15 @@ void use_item(Player* player, Item* item)
 
 void fight(Player* player, Monster* monster)
 {
+    if (monster->type == GOBLIN)
+    {
+        printf("\nA goblin attacks!\n");
+    }
+    else
+    {
+        printf("\nA seleton attacks!\n");
+    }
+
     printf("Combat starts!\n\n"); //starts the monster fight
     getchar();
 

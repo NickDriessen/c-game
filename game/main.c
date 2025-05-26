@@ -8,66 +8,44 @@
 
 #define MAX_FILE_NAME_SIZE 106
 
-int main()
+int main(int argc, char *argv[])
 {
 
     srand(time(NULL));
 
     Gamestate* game = NULL;
-    char choice[10];
-    int validChoice = 0;
-    while (!validChoice) 
+
+    int load = 0;
+
+    for (int i = 0; i < strlen(argv[1]); i++)
     {
-        printf("-----------Welkom to the game!-----------\n");
-        printf("Do you want to load game or start a new save?(Load/New)\ninput: ");
-        scanf("%9s", choice);
-
-        for (int i = 0; i < strlen(choice); i++)
+        if (argv[1][i] == '.')
         {
-            choice[i] = tolower(choice[i]);
-        }
-
-        if(strcmp(choice, "load")==0)
-        {
+            load = 1;
             char fileName[MAX_FILE_NAME_SIZE];
-            printf("give the name of your save file (max 100 char and dont add .json).\n input: ");
-            scanf("%100s", fileName);
-
-            strcat(fileName, ".json");
-
+            strcpy(fileName, argv[1]);
             game = load_game(fileName);
-            if (game) 
-                validChoice = 1;
-            else
-            {
-                printf("File \"%s\" not found and/or loading failed.\n", fileName);
-            }
-
-        }
-        else if(strcmp(choice, "new")==0)
-        {
-            int roomAmmount = 0;
-            printf("How manny room do you want to explore (between 2 and 100)?\ninput: ");
-            scanf("%d", &roomAmmount);
-            if (roomAmmount >= 2 && roomAmmount <= 100)
-            {
-                game = generate_dungeon(roomAmmount);
-            }
-            if (game) validChoice = 1;
-            else
-            {
-                printf("invaled room amount try again.\n");
-            }
-        }
-        else
-        {
-            printf("\"%s\" is not a valed choise try again.\n", choice);
+            printf("------------Welcome back to the dungeon------------\n");
         }
     }
-    
+
+    if(!load && argv[1][1] <= '9' && argv[1][1] >= '1')
+    {
+        int roomAmmount;
+        sscanf(argv[1], "%d", &roomAmmount);
+        if (roomAmmount >= 2 && roomAmmount <= 100)
+        {
+            game = generate_dungeon(roomAmmount);
+            printf("--------------Welcome to the dungeon--------------\n");
+        }
+        else
+            printf("ammount not right needs to be between 2 and 100");
+    }
+
+
     gameplay(game);
 
-    if (game->Player->HP > 0 || game->Player->currentRoom->type != CHEST)
+    if (game->Player->currentRoom->type != CHEST && game->Player->HP > 0)
         ask_save(game);
 
 
